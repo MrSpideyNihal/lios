@@ -35,6 +35,7 @@ class lios_preferences:
     def __init__(self):
         
         #Setting Default Values
+        self.advanced_preferences_enabled = 0  # 0 = disabled, 1 = enabled
         self.font="Georgia 14";self.highlight_font="Georgia 14";
         self.highlight_color="#000000000000";
         self.background_highlight_color="#34346565a4a4";
@@ -78,6 +79,7 @@ class lios_preferences:
         if config.read(filename) != []:
             try:
                 self.theme = int(config.get('cfg', 'theme')) 
+                self.advanced_preferences_enabled = int(config.get('cfg', 'advanced_preferences_enabled', fallback=0))
                 self.time_between_repeated_scanning=int(config.get('cfg',"time_between_repeated_scanning"))
                 self.scan_resolution=int(config.get('cfg',"scan_resolution"))
                 self.scan_brightness=int(config.get('cfg',"scan_brightness"))
@@ -153,6 +155,7 @@ class lios_preferences:
             pass		
         config = configparser.ConfigParser()
         config.add_section('cfg')
+        config.set('cfg', 'advanced_preferences_enabled', str(self.advanced_preferences_enabled))
         config.set('cfg', 'theme', str(self.theme))
         config.set('cfg',"time_between_repeated_scanning",str(self.time_between_repeated_scanning))
         config.set('cfg',"scan_resolution",str(self.scan_resolution))
@@ -313,6 +316,10 @@ class lios_preferences:
             combobox_theme.add_item(item[0])
         combobox_theme.set_active(self.theme)
 
+        checkbutton_advanced_pref = widget.CheckButton(_("Enable Advanced Preferences"))
+        checkbutton_advanced_pref.set_active(self.advanced_preferences_enabled)
+
+
         label_font = widget.Label(_("Font"))
         fontbutton_font = widget.FontButton()
         fontbutton_font.set_font_name(self.font)
@@ -362,18 +369,28 @@ class lios_preferences:
 
         
         grid_general = containers.Grid()
-        grid_general.add_widgets(
-            [(label_theme, 1, 1), (combobox_theme, 1, 1), containers.Grid.NEW_ROW,
-            (label_font,1,1),(fontbutton_font,1,1),containers.Grid.NEW_ROW,								  
-            (label_highlight_font,1,1),(fontbutton_highlight_font,1,1),containers.Grid.NEW_ROW,								  
-            # (label_highlight_color,1,1),(colorbutton_highlight,1,1),containers.Grid.NEW_ROW,							  
-            #(label_highlight_background,1,1),(colorbutton_highlight_background,1,1),containers.Grid.NEW_ROW,
-            (label_speech_module,1,1),(combobox_speech_module,1,1),containers.Grid.NEW_ROW,
-            (label_speech_language,1,1),(combobox_speech_language,1,1),containers.Grid.NEW_ROW,
-            (label_speech_person,1,1),(combobox_speech_person,1,1),containers.Grid.NEW_ROW,
-            (label_speech_rate,1,1),(spin_speech_rate,1,1),containers.Grid.NEW_ROW,
-            (label_speech_pitch,1,1),(spin_speech_pitch,1,1),containers.Grid.NEW_ROW,
-            (label_speech_volume,1,1),(spin_speech_volume,1,1)])
+        if self.advanced_preferences_enabled:
+            # Show advanced settings
+            grid_general.add_widgets(
+                [(checkbutton_advanced_pref, 2, 1), containers.Grid.NEW_ROW,
+                (label_theme, 1, 1), (combobox_theme, 1, 1), containers.Grid.NEW_ROW,
+                (label_font,1,1),(fontbutton_font,1,1),containers.Grid.NEW_ROW,								  
+                (label_highlight_font,1,1),(fontbutton_highlight_font,1,1),containers.Grid.NEW_ROW,								  
+                # (label_highlight_color,1,1),(colorbutton_highlight,1,1),containers.Grid.NEW_ROW,							  
+                #(label_highlight_background,1,1),(colorbutton_highlight_background,1,1),containers.Grid.NEW_ROW,
+                (label_speech_module,1,1),(combobox_speech_module,1,1),containers.Grid.NEW_ROW,
+                (label_speech_language,1,1),(combobox_speech_language,1,1),containers.Grid.NEW_ROW,
+                (label_speech_person,1,1),(combobox_speech_person,1,1),containers.Grid.NEW_ROW,
+                (label_speech_rate,1,1),(spin_speech_rate,1,1),containers.Grid.NEW_ROW,
+                (label_speech_pitch,1,1),(spin_speech_pitch,1,1),containers.Grid.NEW_ROW,
+                (label_speech_volume,1,1),(spin_speech_volume,1,1)])
+        else:
+            grid_general.add_widgets(
+                [(checkbutton_advanced_pref, 2, 1), containers.Grid.NEW_ROW,
+                (label_theme, 1, 1), (combobox_theme, 1, 1), containers.Grid.NEW_ROW,
+                (label_font,1,1),(fontbutton_font,1,1),containers.Grid.NEW_ROW,								  
+                (label_highlight_font,1,1),(fontbutton_highlight_font,1,1),containers.Grid.NEW_ROW])
+
         notebook.add_page(_("General"),grid_general)
         grid_general.show_all()
 
@@ -464,21 +481,31 @@ class lios_preferences:
         label_starting_page_number.set_mnemonic_widget(spin_starting_page_number)
         
         grid_recognition = containers.Grid()
-        grid_recognition.add_widgets([
-            (label_engine,1,1),(combobox_engine,1,1),containers.Grid.NEW_ROW,
-            (label_language,1,1),(combobox_language,1,1),containers.Grid.NEW_ROW,
-            (label_language_2,1,1),(combobox_language_2,1,1),containers.Grid.NEW_ROW,
-            (label_language_3,1,1),(combobox_language_3,1,1),containers.Grid.NEW_ROW,
-            (checkbutton_run_text_cleaner,1,1),containers.Grid.NEW_ROW,
-            (label_insert_position,1,1),(combobox_insert_position,1,1),containers.Grid.NEW_ROW,
-            (seperator_1,2,1),containers.Grid.NEW_ROW,
-            (label_mode_of_rotation,1,1),(combobox_mode_of_rotation,1,1),containers.Grid.NEW_ROW,
-            (self.label_angle,1,1),(combobox_angle,1,1),containers.Grid.NEW_ROW,
-            (seperator_2,2,1),containers.Grid.NEW_ROW,
-            (checkbutton_give_page_number,1,1),containers.Grid.NEW_ROW,
-            (label_numbering_type,1,1),	(combobox_numbering_type,1,1),containers.Grid.NEW_ROW,
-            (label_starting_page_number,1,1),
-            (spin_starting_page_number,1,1)])
+        if self.advanced_preferences_enabled:
+            grid_recognition.add_widgets([
+                (label_engine,1,1),(combobox_engine,1,1),containers.Grid.NEW_ROW,
+                (label_language,1,1),(combobox_language,1,1),containers.Grid.NEW_ROW,
+                (label_language_2,1,1),(combobox_language_2,1,1),containers.Grid.NEW_ROW,
+                (label_language_3,1,1),(combobox_language_3,1,1),containers.Grid.NEW_ROW,
+                (checkbutton_run_text_cleaner,1,1),containers.Grid.NEW_ROW,
+                (label_insert_position,1,1),(combobox_insert_position,1,1),containers.Grid.NEW_ROW,
+                (seperator_1,2,1),containers.Grid.NEW_ROW,
+                (label_mode_of_rotation,1,1),(combobox_mode_of_rotation,1,1),containers.Grid.NEW_ROW,
+                (self.label_angle,1,1),(combobox_angle,1,1),containers.Grid.NEW_ROW,
+                (seperator_2,2,1),containers.Grid.NEW_ROW,
+                (checkbutton_give_page_number,1,1),containers.Grid.NEW_ROW,
+                (label_numbering_type,1,1),	(combobox_numbering_type,1,1),containers.Grid.NEW_ROW,
+                (label_starting_page_number,1,1),
+                (spin_starting_page_number,1,1)])
+        else:
+            grid_recognition.add_widgets([
+                (label_engine,1,1),(combobox_engine,1,1),containers.Grid.NEW_ROW,
+                (label_language,1,1),(combobox_language,1,1),containers.Grid.NEW_ROW,
+                (label_language_2,1,1),(combobox_language_2,1,1),containers.Grid.NEW_ROW,
+                (label_language_3,1,1),(combobox_language_3,1,1),containers.Grid.NEW_ROW,
+                (label_mode_of_rotation,1,1),(combobox_mode_of_rotation,1,1),containers.Grid.NEW_ROW,
+                (label_starting_page_number,1,1),
+                (spin_starting_page_number,1,1)])
         notebook.add_page(_("Recognition"),grid_recognition)
         grid_recognition.show_all()
 
@@ -536,18 +563,24 @@ class lios_preferences:
         checkbutton_scanner_cache_calibration.set_active(self.scanner_cache_calibration)
         
         grid_scanning = containers.Grid()
-        grid_scanning.add_widgets([
-            (label_resolution,1,1),(spin_resolution,1,1),containers.Grid.NEW_ROW,
-            (label_brightness,1,1),(spin_brightness,1,1),containers.Grid.NEW_ROW,
-            # (label_scan_area,1,1),(combobox_scan_area,1,1),containers.Grid.NEW_ROW,
-            (label_scan_driver,1,1),(combobox_scan_driver,1,1),containers.Grid.NEW_ROW,
-            (sparator_3,2,1),containers.Grid.NEW_ROW,
-            (label_number_of_pages_to_scan,1,1),(spin_number_of_pages_to_scan,1,1),containers.Grid.NEW_ROW,
-            (label_time_bitween_repeted_scanning,1,1),(spin_time_bitween_repeted_scanning,1,1),containers.Grid.NEW_ROW,
-            (sparator_4,2,1),containers.Grid.NEW_ROW,
-            (checkbutton_scan_mode_switching,2,1),containers.Grid.NEW_ROW,
-            (checkbutton_scanner_cache_calibration,2,1)])
-        
+        if self.advanced_preferences_enabled:
+            grid_scanning.add_widgets([
+                (label_resolution,1,1),(spin_resolution,1,1),containers.Grid.NEW_ROW,
+                (label_brightness,1,1),(spin_brightness,1,1),containers.Grid.NEW_ROW,
+                # (label_scan_area,1,1),(combobox_scan_area,1,1),containers.Grid.NEW_ROW,
+                (label_scan_driver,1,1),(combobox_scan_driver,1,1),containers.Grid.NEW_ROW,
+                (sparator_3,2,1),containers.Grid.NEW_ROW,
+                (label_number_of_pages_to_scan,1,1),(spin_number_of_pages_to_scan,1,1),containers.Grid.NEW_ROW,
+                (label_time_bitween_repeted_scanning,1,1),(spin_time_bitween_repeted_scanning,1,1),containers.Grid.NEW_ROW,
+                (sparator_4,2,1),containers.Grid.NEW_ROW,
+                (checkbutton_scan_mode_switching,2,1),containers.Grid.NEW_ROW,
+                (checkbutton_scanner_cache_calibration,2,1)])
+        else:
+            grid_scanning.add_widgets([
+                (label_resolution,1,1),(spin_resolution,1,1),containers.Grid.NEW_ROW,
+                (label_brightness,1,1),(spin_brightness,1,1),containers.Grid.NEW_ROW,
+                (label_scan_driver,1,1),(combobox_scan_driver,1,1),containers.Grid.NEW_ROW,
+                ])
         notebook.add_page(_("Scanning"),grid_scanning)
         grid_scanning.show_all()
         
@@ -557,6 +590,7 @@ class lios_preferences:
         dlg = dialog.Dialog(_("Lios Preferences"),(_("Apply"),dialog.Dialog.BUTTON_ID_1,_("Close"),dialog.Dialog.BUTTON_ID_2))
         dlg.add_widget(notebook)
         if (dlg.run()==True):
+            self.advanced_preferences_enabled = int(checkbutton_advanced_pref.get_active())
             self.font=fontbutton_font.get_font_name();
 
             self.highlight_font=fontbutton_highlight_font.get_font_name();

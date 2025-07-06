@@ -254,6 +254,7 @@ class BasicTextView(text_view.TextView):
 
     def open_text_cleaner(self,*data):
         window_text_cleaner = window.Window(_("Text Cleaner"))
+        window_text_cleaner.set_modal(True)
         scroll_box = containers.ScrollBox()
         treeview = tree_view.TreeView([(_("Match"),str,True),(_("Replace"),str,True)],None)
         scroll_box.add(treeview)
