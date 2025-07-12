@@ -304,9 +304,25 @@ class lios_preferences:
 
 
         self.require_scanner_refresh = False
-        
+        outer_box = containers.Box(containers.Box.VERTICAL)
+
         #Notebook
+        checkbutton_advanced_pref = widget.CheckButton(_("Enable Advanced Preferences"))
+        checkbutton_advanced_pref.set_active(self.advanced_preferences_enabled)
+        outer_box.add(checkbutton_advanced_pref)
+
         notebook = containers.NoteBook()
+        notebook.show_all()
+        outer_box.add(notebook)
+        def on_toggle_advanced_pref(widget):
+            self.advanced_preferences_enabled = int(checkbutton_advanced_pref.get_active())
+            current_page = notebook.get_current_page()
+            dlg.destroy()
+            self.open_configure_dialog(current_page)
+        
+        checkbutton_advanced_pref.connect("toggled", on_toggle_advanced_pref)
+        
+
         notebook.show_all()
         
         #GENERAL - PAGE #########	
@@ -315,9 +331,6 @@ class lios_preferences:
         for item in self.theme_list:
             combobox_theme.add_item(item[0])
         combobox_theme.set_active(self.theme)
-
-        checkbutton_advanced_pref = widget.CheckButton(_("Enable Advanced Preferences"))
-        checkbutton_advanced_pref.set_active(self.advanced_preferences_enabled)
 
 
         label_font = widget.Label(_("Font"))
@@ -372,7 +385,7 @@ class lios_preferences:
         if self.advanced_preferences_enabled:
             # Show advanced settings
             grid_general.add_widgets(
-                [(checkbutton_advanced_pref, 2, 1), containers.Grid.NEW_ROW,
+                [
                 (label_theme, 1, 1), (combobox_theme, 1, 1), containers.Grid.NEW_ROW,
                 (label_font,1,1),(fontbutton_font,1,1),containers.Grid.NEW_ROW,								  
                 (label_highlight_font,1,1),(fontbutton_highlight_font,1,1),containers.Grid.NEW_ROW,								  
@@ -386,7 +399,7 @@ class lios_preferences:
                 (label_speech_volume,1,1),(spin_speech_volume,1,1)])
         else:
             grid_general.add_widgets(
-                [(checkbutton_advanced_pref, 2, 1), containers.Grid.NEW_ROW,
+                [
                 (label_theme, 1, 1), (combobox_theme, 1, 1), containers.Grid.NEW_ROW,
                 (label_font,1,1),(fontbutton_font,1,1),containers.Grid.NEW_ROW,								  
                 (label_highlight_font,1,1),(fontbutton_highlight_font,1,1),containers.Grid.NEW_ROW])
@@ -588,7 +601,9 @@ class lios_preferences:
         notebook.set_current_page(page)
         
         dlg = dialog.Dialog(_("Lios Preferences"),(_("Apply"),dialog.Dialog.BUTTON_ID_1,_("Close"),dialog.Dialog.BUTTON_ID_2))
-        dlg.add_widget(notebook)
+        dlg.add_widget(outer_box)
+        outer_box.show_all()
+
         if (dlg.run()==True):
             self.advanced_preferences_enabled = int(checkbutton_advanced_pref.get_active())
             self.font=fontbutton_font.get_font_name();
