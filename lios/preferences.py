@@ -331,6 +331,9 @@ class lios_preferences:
         for item in self.theme_list:
             combobox_theme.add_item(item[0])
         combobox_theme.set_active(self.theme)
+        spacer = widget.Label("")
+        spacer.set_size_request(-1, 270)
+        
 
 
         label_font = widget.Label(_("Font"))
@@ -402,7 +405,8 @@ class lios_preferences:
                 [
                 (label_theme, 1, 1), (combobox_theme, 1, 1), containers.Grid.NEW_ROW,
                 (label_font,1,1),(fontbutton_font,1,1),containers.Grid.NEW_ROW,								  
-                (label_highlight_font,1,1),(fontbutton_highlight_font,1,1),containers.Grid.NEW_ROW])
+                (label_highlight_font,1,1),(fontbutton_highlight_font,1,1),containers.Grid.NEW_ROW,
+                (spacer,1,9),containers.Grid.NEW_ROW])
 
         notebook.add_page(_("General"),grid_general)
         grid_general.show_all()

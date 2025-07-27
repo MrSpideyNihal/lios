@@ -71,6 +71,7 @@ class linux_intelligent_ocr_solution():
 		scroll_box_iconview = containers.ScrollBox()
 		self.iconview = icon_view.IconView()
 		self.iconview.set_vexpand(True)
+		self.iconview.enable_delete_key()
 		scroll_box_iconview.add(self.iconview)
 		box_iconview = containers.Box(containers.Box.VERTICAL)
 		toolbar_iconview = containers.Toolbar(containers.Toolbar.HORIZONTAL,
@@ -155,10 +156,24 @@ class linux_intelligent_ocr_solution():
 			(_("Go-To-Page"),self.go_to_page),
 			
 			])
-		box_editor.add(toolbar_editor)
+		label_shortcut = widget.Label(_("Press Alt+D to remove selection"))
+		label_shortcut.set_xalign(1)  # Align label content right
+
+		hbox_toolbar = containers.Box(containers.Box.HORIZONTAL)
+		hbox_toolbar.set_hexpand(True)
+		spacer = containers.Box(containers.Box.HORIZONTAL)  
+		spacer.set_hexpand(True)
+		
+		hbox_toolbar.add(toolbar_editor)
+		hbox_toolbar.add(spacer)
+		hbox_toolbar.add(label_shortcut)  
+
+		box_editor.add(hbox_toolbar)
+
 		scroll_box_editor = containers.ScrollBox()
 		scroll_box_editor.add(self.textview)
 		box_editor.add(scroll_box_editor)
+
 
 		#Load TextCleaner List
 		if(not self.textview.set_text_cleaner_list_from_file(macros.local_text_cleaner_list_file_path)):
@@ -1557,13 +1572,17 @@ pacman -S aspell-{1}""").format(lang, langdict, langdict, langdict, langdict))
 		dlg.set_program_name(_("Linux-Intelligent-Ocr-Solution"))
 		dlg.set_version(macros.version)
 		dlg.set_logo_from_file(macros.logo_file)
-		dlg.set_comments(_("Lios is a free and open source software\n \
-			for converting print into text using a scanner or camara.\n\
-			It can also produce text from other sources. Such as images,\n\
-			Pdf, or screenshot. Program is given total accessibility \n\
-			for visually impaired. Lios is written in python3 and we release \n\
-			it under GPL3 licence. There are great many possibilities\n\
-			for this program. Feedback is the key to it."))
+		dlg.set_comments(
+    _("Lios is a free and open source software\n"
+      "for converting print into text using a scanner or camera.\n"
+      "It can also produce text from other sources such as images,\n"
+      "PDF, or screenshot. The program is fully accessible\n"
+      "for visually impaired users. Lios is written in Python 3 and is released\n"
+      "under the GPL-3 license. There are great many possibilities\n"
+      "for this program. Feedback is the key to it.\n\n"
+      "Brought to you by Zendalona")
+)
+
 		dlg.set_copyright("Copyright (C) 2011-2015 Nalin.x.Linux")
 		dlg.set_license("GPL-V3")
 		dlg.set_website(macros.home_page_link)
