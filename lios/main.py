@@ -1560,7 +1560,7 @@ pacman -S aspell-{1}""").format(lang, langdict, langdict, langdict, langdict))
 	def scan_using_cam(self,widget):
 		devices = cam.Cam.get_available_devices()
 		if(devices):
-			ob = cam.Cam(devices[-1],1024,768)
+			ob = cam.Cam(devices[0],1024,768)
 			ob.connect_image_captured(self.cam_image_captured)
 		
 	def cam_image_captured(self,widget,filename):
