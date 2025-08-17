@@ -580,6 +580,9 @@ class BasicTextView(text_view.TextView):
             (statusbar_context,2,1),containers.Grid.NEW_ROW,(next_button,1,1,False,False),
             (previous_button,1,1,False,False)])
         window_find = window.Window(_("Find Dialog"))
+        window_find.set_transient_for(self.get_toplevel())   # tie to main window
+        window_find.set_modal(True)                          # block until closed
+        window_find.set_destroy_with_parent(True)            # close with parent
         window_find.add(grid)
         window_find.show_all()
 
@@ -644,6 +647,9 @@ class BasicTextView(text_view.TextView):
             containers.Grid.NEW_ROW,(statusbar_context,6,1),containers.Grid.NEW_ROW,
             (button_replace,3,1,False,False),(button_replace_all,3,1,False,False)])
         window_find = window.Window(_("Find Dialog"))
+        window_find.set_transient_for(self.get_toplevel())   # tie to main window
+        window_find.set_modal(True)                          # block until closed
+        window_find.set_destroy_with_parent(True)            # close with parent
         window_find.add(grid)
         window_find.show_all()
     
@@ -738,6 +744,9 @@ class BasicTextView(text_view.TextView):
         find_next_mispeleed_word()
         
         window1 = window.Window(_("Spell-Check"))
+        window1.set_transient_for(self.get_toplevel())   # tie to main window
+        window1.set_modal(True)                          # block until closed
+        window1.set_destroy_with_parent(True)            # close with parent
         window1.add(grid)
         window1.set_default_size(500,200)
         window1.show_all()
