@@ -26,6 +26,8 @@ from gi.repository import Gtk
 from gi.repository import Gst
 from gi.repository import Gdk
 from gi.repository import GObject
+import gettext
+_ = gettext.gettext
 
 import datetime
 import os.path
