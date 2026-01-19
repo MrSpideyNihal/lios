@@ -498,8 +498,8 @@ class linux_intelligent_ocr_solution():
 		.format(destination,destination.split(".")[0],pdf_filename.split(".")[0])) , args=())
 		
 		p.start()
-		while(p.is_alive()):
-			pass
+		while p.is_alive():
+			time.sleep(0.1)
 		os.remove(destination)
 		
 		file_list = os.listdir(destination.split(".")[0])
@@ -619,8 +619,8 @@ class linux_intelligent_ocr_solution():
 			args=(parent_conn, child_conn))
 		
 			p.start()
-			while(p.is_alive()):
-				pass
+			while p.is_alive():
+				time.sleep(0.1)
 		
 		
 			driver = self.available_scanner_driver_list[self.preferences.scan_driver]
@@ -673,8 +673,8 @@ class linux_intelligent_ocr_solution():
 		destination = self.get_feesible_filename_from_filename(destination)
 		t = threading.Thread(target=self.scan,args=(destination,))
 		t.start()
-		while(t.is_alive()):
-			pass
+		while t.is_alive():
+			time.sleep(0.1)
 		self.preferences.update_page_number()
 		#self.make_scanner_widgets_active(lock=True)
 		#self.make_preferences_widgets_active(lock=True)
@@ -698,8 +698,8 @@ class linux_intelligent_ocr_solution():
 			destination = self.get_feesible_filename_from_filename(destination)
 			t = threading.Thread(target=self.scan,args=(destination,))
 			t.start()
-			while(t.is_alive()):
-				pass
+			while t.is_alive():
+				time.sleep(0.1)
 			self.preferences.update_page_number()
 			if(self.process_breaker):
 				break
@@ -721,8 +721,8 @@ class linux_intelligent_ocr_solution():
 		self.preferences.scan_brightness,self.preferences.scan_area))
 
 		p.start()
-		while(p.is_alive()):
-			pass
+		while p.is_alive():
+			time.sleep(0.1)
 		self.notify_information(_("Scan Completed!"),0)
 			
 		if(self.process_breaker):
@@ -819,8 +819,8 @@ class linux_intelligent_ocr_solution():
 		destination = self.get_feesible_filename_from_filename(destination)
 		t = threading.Thread(target=self.scan,args=(destination,))
 		t.start()
-		while(t.is_alive()):
-			pass
+		while t.is_alive():
+			time.sleep(0.1)
 		if(self.process_breaker):
 			#self.make_scanner_widgets_active(lock=True)
 			#self.make_ocr_widgets_active(lock=True)
@@ -861,8 +861,8 @@ class linux_intelligent_ocr_solution():
 			destination = self.get_feesible_filename_from_filename(destination)
 			t = threading.Thread(target=self.scan,args=(destination,))
 			t.start()
-			while(t.is_alive()):
-				pass
+			while t.is_alive():
+				time.sleep(0.1)
 			if(self.process_breaker):
 				break
 			time.sleep(self.preferences.time_between_repeated_scanning)	
@@ -924,8 +924,8 @@ class linux_intelligent_ocr_solution():
 				self.preferences.scan_brightness,self.preferences.scan_area))
 			
 			p.start()
-			while(p.is_alive()):
-				pass
+			while p.is_alive():
+				time.sleep(0.1)
 			text,angle = self.ocr("{0}rotate.pnm".format(macros.tmp_dir),mode,00)
 			self.notify_information("Image at {} angle.".format(angle),0)
 		else:
@@ -1058,8 +1058,8 @@ class linux_intelligent_ocr_solution():
 				self.preferences.scan_resolution,pos,self.preferences.scan_area))
 				
 				p.start()
-				while(p.is_alive()):
-					pass
+				while p.is_alive():
+					time.sleep(0.1)
 				if(self.process_breaker):
 					list = sorted(list, key=lambda item: item[0],reverse=True)
 					return (list)
