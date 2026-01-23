@@ -57,25 +57,35 @@ readme_file = "readme.text"
 default_text_cleaner_list_file_path = "text_cleaner_list.text"
 
 # --- Resolve resource paths ---
-if os.path.exists(os.path.join(datadir, logo_file)):
-    # case: datadir explicitly set before import
-    logo_file = os.path.join(datadir, logo_file)
-    icon_dir = os.path.join(datadir, icon_dir)
-    readme_file = os.path.join(datadir, readme_file)
-
-elif os.path.exists(os.path.join(parent_dir, "share", "lios", logo_file)):
-    # case: running from source tree
-    datadir = os.path.join(parent_dir, "share", "lios")
+def _resolve_datadir():
+    """Resolve datadir based on installation type."""
+    global datadir, logo_file, icon_dir, readme_file, default_text_cleaner_list_file_path
+    
+    # Priority 1: Check if running from source tree (development)
+    source_data = os.path.join(parent_dir, "share", "lios")
+    if os.path.exists(os.path.join(source_data, "lios.png")):
+        datadir = source_data
+    # Priority 2: Check pip user install location
+    elif os.path.exists(os.path.join(user_home_path, ".local", "share", "lios", "lios.png")):
+        datadir = os.path.join(user_home_path, ".local", "share", "lios")
+    # Priority 3: Check system-wide install
+    elif os.path.exists("/usr/share/lios/lios.png"):
+        datadir = "/usr/share/lios"
+    # Priority 4: Check /usr/local (some distros)
+    elif os.path.exists("/usr/local/share/lios/lios.png"):
+        datadir = "/usr/local/share/lios"
+    else:
+        # Fallback: try system-wide path anyway
+        datadir = "/usr/share/lios"
+    
+    # Set the resource paths
     logo_file = os.path.join(datadir, "lios.png")
-    icon_dir = os.path.join(datadir, "icons/")
+    icon_dir = os.path.join(datadir, "icons")
     readme_file = os.path.join(datadir, "readme.text")
+    default_text_cleaner_list_file_path = os.path.join(datadir, "text_cleaner_list.text")
 
-else:
-    # case: installed system-wide
-    datadir = "/usr/share/lios"
-    logo_file = os.path.join(datadir, "lios.png")
-    icon_dir = os.path.join(datadir, "icons/")
-    readme_file = os.path.join(datadir, "readme.text")
+# Run resolution at import time
+_resolve_datadir()
 
 
 app_name = "Linux-intelligent-ocr-solution"
@@ -95,17 +105,15 @@ major_character_encodings_list = [
 
 # --- Safe setter ---
 def set_datadir(new_datadir):
-    """Override datadir at runtime (avoids double-prefixing)."""
+    """Override datadir at runtime. Only applies if the new path exists."""
     global datadir, logo_file, icon_dir, readme_file
     global default_text_cleaner_list_file_path
 
-    datadir = new_datadir
-
-    if not logo_file.startswith(datadir):
-        logo_file = os.path.join(datadir, "lios.png")
-    if not icon_dir.startswith(datadir):
-        icon_dir = os.path.join(datadir, "icons/")
-    if not readme_file.startswith(datadir):
+    # Only override if the new datadir actually has the required files
+    new_logo = os.path.join(new_datadir, "lios.png")
+    if os.path.exists(new_logo):
+        datadir = new_datadir
+        logo_file = new_logo
+        icon_dir = os.path.join(datadir, "icons")
         readme_file = os.path.join(datadir, "readme.text")
-    if not default_text_cleaner_list_file_path.startswith(datadir):
         default_text_cleaner_list_file_path = os.path.join(datadir, "text_cleaner_list.text")
