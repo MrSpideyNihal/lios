@@ -67,16 +67,9 @@ class OcrEngineBase(metaclass=abc.ABCMeta):
 			return False
 	
 	def ocr_image_to_text_with_multiprocessing(self,image_file_name):
-		parent_conn, child_conn = multiprocessing.Pipe()
-		
-		p = multiprocessing.Process(target=(lambda parent_conn, child_conn,
-		image_file_name : child_conn.send(self.ocr_image_to_text(image_file_name))),
-		args=(parent_conn, child_conn,image_file_name))
-		
-		p.start()
-		p.join()
-		
-		return parent_conn.recv();
+		# Call directly instead of multiprocessing to avoid pickling issues
+		# Python 3.14's forkserver can't pickle lambdas that capture 'self'
+		return self.ocr_image_to_text(image_file_name)
 
 
 	@staticmethod
