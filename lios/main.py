@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+	#!/usr/bin/env python3
 ###########################################################################
 #    Lios - Linux-Intelligent-Ocr-Solution
 #    Copyright (C) 2011-2015 Nalin.x.Linux GPL-3
@@ -494,12 +494,9 @@ class linux_intelligent_ocr_solution():
 
 		self.notify_information(_("Extracting images from Pdf"))
 
-		p = multiprocessing.Process(target=lambda : os.system("pdftoppm {} {}/{} -png"
-		.format(destination,destination.split(".")[0],pdf_filename.split(".")[0])) , args=())
-		
-		p.start()
-		while p.is_alive():
-			time.sleep(0.1)
+		# Use subprocess instead of multiprocessing to avoid pickling issues with lambda
+		import subprocess
+		subprocess.run(["pdftoppm", destination, "{}/{}".format(destination.split(".")[0], pdf_filename.split(".")[0]), "-png"])
 		os.remove(destination)
 		
 		file_list = os.listdir(destination.split(".")[0])
@@ -614,17 +611,13 @@ class linux_intelligent_ocr_solution():
 		
 		
 			parent_conn, child_conn = multiprocessing.Pipe()
-			p = multiprocessing.Process(target=(lambda parent_conn, child_conn :
-			child_conn.send(tuple(self.available_scanner_driver_list[self.preferences.scan_driver].get_available_devices()))),
-			args=(parent_conn, child_conn))
-		
-			p.start()
-			while p.is_alive():
-				time.sleep(0.1)
+			# Call directly instead of multiprocessing to avoid pickling issues with lambda
+			# This is already running in a separate thread via @on_thread decorator
+			devices = tuple(self.available_scanner_driver_list[self.preferences.scan_driver].get_available_devices())
 		
 		
 			driver = self.available_scanner_driver_list[self.preferences.scan_driver]
-			list_ = list(parent_conn.recv())
+			list_ = list(devices)
 			for device in list_:
 				self.notify_information(_("Setting Scanner {}").format(device))
 				scanner = driver(device,self.preferences.scanner_mode_switching,
