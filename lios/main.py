@@ -26,7 +26,7 @@ from functools import wraps
 
 from lios import scanner, editor, imageview, cam, ocr, preferences, speech
 from lios.ui.gtk import widget, containers, loop, menu, \
-	window, icon_view, dialog, about
+	window, icon_view, dialog, about, mp_compat
 
 from lios.ui.gtk.file_chooser import FileChooserDialog
 from lios import macros
