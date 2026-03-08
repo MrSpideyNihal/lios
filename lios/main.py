@@ -38,6 +38,7 @@ from lios import dictionary
 from lios import localization
 _ = localization._
 
+from lios import mp_compat  # Fix Python 3.14+ multiprocessing lambda compatibility
 import multiprocessing
 import threading
 
