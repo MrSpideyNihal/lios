@@ -6,40 +6,51 @@ Automated unit and integration tests for the **Linux-Intelligent-OCR-Solution (L
 
 ## Quick Start
 
-```bash
-# 1. Create the virtual environment (one-time)
-python3 -m venv ~/.venvs/lios_tests
-~/.venvs/lios_tests/bin/pip install pytest pytest-cov Pillow pyenchant
+The best way to run the tests is to use a local Python virtual environment inside your cloned repository so it doesn't interfere with your system packages.
 
-# 2. Run all tests from the project root
-cd /path/to/lios
-PYTHONPATH=. ~/.venvs/lios_tests/bin/python -m pytest Tests/
+```bash
+# 1. Clone the repository and switch to the test branch
+git clone https://github.com/MrSpideyNihal/lios.git
+cd lios
+git checkout LIOS-test
+
+# 2. Create and activate a local virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Install testing dependencies
+pip install pytest pytest-cov Pillow pyenchant
+
+# 4. Run all tests locally sandboxed
+PYTHONPATH=. pytest Tests/
 ```
 
 ---
 
 ## How to Run
 
+*Note: Ensure your virtual environment is active (`source venv/bin/activate`) before running.*
+
 ### All tests (with coverage)
 ```bash
-PYTHONPATH=. ~/.venvs/lios_tests/bin/python -m pytest Tests/
+PYTHONPATH=. pytest Tests/
 ```
 Coverage report is printed in the terminal and saved as HTML to `Tests/coverage_html/index.html`.
 
 ### All tests (fast, no coverage)
 ```bash
-PYTHONPATH=. ~/.venvs/lios_tests/bin/python -m pytest Tests/ --no-cov
+PYTHONPATH=. pytest Tests/ --no-cov
 ```
 
 ### A single file
 ```bash
-PYTHONPATH=. ~/.venvs/lios_tests/bin/python -m pytest Tests/test_ocr_engine_base.py -v
+PYTHONPATH=. pytest Tests/test_ocr_engine_base.py -v
 ```
 
 ### A single test class or test
 ```bash
-PYTHONPATH=. ~/.venvs/lios_tests/bin/python -m pytest Tests/test_ocr_engines.py::TestOcrEngineTesseract -v
-PYTHONPATH=. ~/.venvs/lios_tests/bin/python -m pytest Tests/test_ocr_engines.py::TestOcrEngineTesseract::test_name_attribute -v
+PYTHONPATH=. pytest Tests/test_ocr_engines.py::TestOcrEngineTesseract -v
+PYTHONPATH=. pytest Tests/test_ocr_engines.py::TestOcrEngineTesseract::test_name_attribute -v
 ```
 
 ### Useful flags
