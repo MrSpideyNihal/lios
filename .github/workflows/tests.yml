@@ -15,7 +15,7 @@ jobs:
         python-version: ["3.9", "3.10", "3.11"]
 
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Set up Python
@@ -23,10 +23,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install system dependencies (Tesseract)
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y tesseract-ocr
+        sudo apt-get install -y tesseract-ocr imagemagick
 
     - name: Install Python dependencies
       run: |
@@ -35,7 +43,7 @@ jobs:
 
     - name: Run tests
       run: |
-        PYTHONPATH=. pytest Tests/ --tb=short
+        PYTHONPATH=. pytest Tests/ -v --tb=short
 
     - name: Generate coverage HTML
       run: |
@@ -44,5 +52,5 @@ jobs:
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
+        name: coverage-report-${{ matrix.python-version }}
         path: Tests/coverage_html/
