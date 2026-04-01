@@ -15,42 +15,42 @@ jobs:
         python-version: ["3.9", "3.10", "3.11"]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y tesseract-ocr imagemagick
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr imagemagick
 
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-cov Pillow pyenchant
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov Pillow pyenchant
 
-    - name: Run tests
-      run: |
-        PYTHONPATH=. pytest Tests/ -v --tb=short
+      - name: Run tests
+        run: |
+          PYTHONPATH=. pytest Tests/ -v --tb=short
 
-    - name: Generate coverage HTML
-      run: |
-        PYTHONPATH=. pytest Tests/ --cov=lios --cov-report=html
+      - name: Generate coverage HTML
+        run: |
+          PYTHONPATH=. pytest Tests/ --cov=lios --cov-report=html
 
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report-${{ matrix.python-version }}
-        path: Tests/coverage_html/
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.python-version }}
+          path: Tests/coverage_html/
