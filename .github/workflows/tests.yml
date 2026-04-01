@@ -1,0 +1,48 @@
+name: LIOS Test Suite
+
+on:
+  push:
+    branches: [ main, LIOS-test ]
+  pull_request:
+    branches: [ main, LIOS-test ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies (Tesseract)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tesseract-ocr
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov Pillow pyenchant
+
+    - name: Run tests
+      run: |
+        PYTHONPATH=. pytest Tests/ --tb=short
+
+    - name: Generate coverage HTML
+      run: |
+        PYTHONPATH=. pytest Tests/ --cov=lios --cov-report=html
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: Tests/coverage_html/
