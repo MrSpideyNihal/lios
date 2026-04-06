@@ -1,4 +1,4 @@
-# LIOS Test Suite
+# LIOS Test Suite - By Zendalona
 
 Automated unit and integration tests for the **Linux-Intelligent-OCR-Solution (LIOS)** backend.
 
