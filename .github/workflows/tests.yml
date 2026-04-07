@@ -1,11 +1,11 @@
 name: LIOS Test Suite
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger — choose any branch from the Actions UI
   push:
-    branches: [ main, LIOS-test ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, LIOS-test ]
+    branches: [ main ]
 
 jobs:
   test:
