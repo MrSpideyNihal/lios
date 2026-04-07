@@ -116,7 +116,7 @@ class linux_intelligent_ocr_solution():
 		scroll_box_iconview = containers.ScrollBox()
 		self.iconview = icon_view.IconView()
 		# Wire invert-list announcement (LIOS_92)
-		self.iconview.on_invert_list_callback = lambda: self.notify_information(_(\"Image list order reversed\"), 0)
+		self.iconview.on_invert_list_callback = lambda: self.notify_information(_("Image list order reversed"), 0)
 		self.iconview.set_vexpand(True)
 		self.iconview.enable_delete_key()
 		scroll_box_iconview.add(self.iconview)
