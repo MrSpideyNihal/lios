@@ -38,6 +38,8 @@ class IconView(Gtk.IconView):
 		self.set_text_column(1)
 		self.set_columns(1)
 		self.set_model(self.liststore_images)
+		# Callback wired from main.py for announcements (LIOS_92)
+		self.on_invert_list_callback = None
 
 	#methord is not thread safe
 	def add_item(self,filename):
@@ -123,6 +125,9 @@ class IconView(Gtk.IconView):
 			liststore.append((item[0],item[1]))
 		self.liststore_images = liststore
 		self.set_model(self.liststore_images)
+		# Fix LIOS_92: announce invert
+		if callable(self.on_invert_list_callback):
+			self.on_invert_list_callback()
 	
 	def connect_on_selected_callback(self,function):
 		self.connect("selection-changed",function)
