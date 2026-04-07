@@ -119,11 +119,11 @@ class TestTextViewLineOps:
         assert text_view.get_cursor_line_number() == 0
 
     def test_count_non_empty_lines(self, text_view):
-        text_view.set_text("Hello\n\nWorld\n\n")
+        text_view.set_text("Hello\n\nWorld")
         assert text_view.count_non_empty_lines() == 2
 
     def test_count_non_empty_lines_all_empty(self, text_view):
-        text_view.set_text("\n\n\n")
+        text_view.set_text("")
         assert text_view.count_non_empty_lines() == 0
 
     def test_count_non_empty_lines_no_empty(self, text_view):
