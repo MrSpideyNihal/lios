@@ -182,15 +182,18 @@ class TextView(Gtk.TextView):
 			if up_to_line is not None and line > up_to_line:
 				break
 			iter = buffer.get_iter_at_line(line)
-			if not iter.ends_line() or iter.get_char() != '\n':
+			# ends_line() is True when the iter is right at the newline/end-of-line,
+			# which means the line has no visible content (empty line).
+			if not iter.ends_line():
 				count += 1
 		return count
+
 	def move_cursor_to_non_empty_line(self, target_line):
 		buffer = self.get_buffer()
 		current_non_empty = 0
 		for line in range(buffer.get_line_count()):
 			iter = buffer.get_iter_at_line(line)
-			if not iter.ends_line() or iter.get_char() != '\n':
+			if not iter.ends_line():
 				current_non_empty += 1
 				if current_non_empty == target_line:
 					buffer.place_cursor(iter)

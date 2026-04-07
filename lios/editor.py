@@ -75,11 +75,16 @@ class BasicTextView(text_view.TextView):
         self.connect_delete(self.push)
         self.bookmark_list = []
         self.text_cleaner_list = []
-        
-        #This variable is to avoid the reverse event 
-        #while pressing undo or redo that again trigger
-        # insert or delete signals - Nalin.x.GNU
-        self.push_change_to_undobuffer = True;
+
+        # Callback wired from main.py to announce save location
+        self.on_save_success = None
+        # Callback wired from main.py to announce text cleaner actions
+        self.on_text_cleaner_action = None
+
+        # Integer counter to block undo/redo signals from re-pushing.
+        # set_text() emits BOTH delete-range and insert-text, so we need
+        # to suppress two signals, not just one.
+        self._undo_guard = 0
     def insert_text_with_line_numbers(self, text):
         lines = text.split('\n')
         numbered_lines = []
@@ -110,23 +115,25 @@ class BasicTextView(text_view.TextView):
     def undo(self,arg=None):
         if( not self.q.empty()):
             text = self.q.get()
-            self.push_change_to_undobuffer = False
+            # set_text() fires delete-range then insert-text, so suppress 2 signals
+            self._undo_guard = 2
             self.set_text(text)
             self.q2.put(text)
-        
+
     def redo(self,arg=None):
         if( not self.q2.empty()):
             text = self.q2.get()
-            self.push_change_to_undobuffer = False
+            self._undo_guard = 2
             self.set_text(text)
             self.q.put(text)
-    
+
     def push(self):
+        if self._undo_guard > 0:
+            self._undo_guard -= 1
+            return
         text = self.get_text()
-        if(text and self.push_change_to_undobuffer):
+        if text:
             self.q.put(text)
-        else:
-            self.push_change_to_undobuffer = True
 
 
     def new(self,*data):
@@ -189,6 +196,8 @@ class BasicTextView(text_view.TextView):
                 self.save_bookmark_table()
                 self.set_modified(False)	
                 save_file.destroy()
+                if callable(self.on_save_success):
+                    self.on_save_success(self.save_file_name)
                 return True
             else:
                 save_file.destroy()
@@ -197,7 +206,9 @@ class BasicTextView(text_view.TextView):
             open(self.save_file_name,'w').write(text)
             self.save_bookmark_table()
             self.set_modified(False)
-            return True		
+            if callable(self.on_save_success):
+                self.on_save_success(self.save_file_name)
+            return True
 
 
     def save_as(self,*data):
@@ -226,12 +237,19 @@ class BasicTextView(text_view.TextView):
         insert_at_cursor_dialog.destroy()
 
 
-    def set_text_cleaner_list_from_file(self,filename):
-        self.text_cleaner_list = []
+    def set_text_cleaner_list_from_file(self,filename, append=False):
+        if not append:
+            self.text_cleaner_list = []
         try:
             with open(filename) as file:
                 for line in file:
-                    self.text_cleaner_list.append((line.split("==")[0],line.split("==")[1][:-1]))
+                    parts = line.split("==")
+                    if len(parts) >= 2:
+                        match_word = parts[0]
+                        replace_word = parts[1].rstrip("\n")
+                        # Skip duplicates when appending
+                        if not any(pair[0] == match_word for pair in self.text_cleaner_list):
+                            self.text_cleaner_list.append((match_word, replace_word))
         except:
             return False
         return True
@@ -260,12 +278,14 @@ class BasicTextView(text_view.TextView):
         "*",macros.user_home_path)
         response = open_file.run()
         if response == file_chooser.FileChooserDialog.ACCEPT:
-            self.set_text_cleaner_list_from_file(open_file.get_filename())
+            # Append imported entries to existing list instead of replacing
+            self.set_text_cleaner_list_from_file(open_file.get_filename(), append=True)
             self.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path);
         open_file.destroy()
 
     def open_text_cleaner(self,*data):
         window_text_cleaner = window.Window(_("Text Cleaner"))
+        window_text_cleaner.set_transient_for(self.get_toplevel())  # Fix LIOS_107: subwindow follows main window
         window_text_cleaner.set_modal(True)
         scroll_box = containers.ScrollBox()
         treeview = tree_view.TreeView([(_("Match"),str,True),(_("Replace"),str,True)],None)
@@ -282,16 +302,29 @@ class BasicTextView(text_view.TextView):
             dlg.show_all()
             response = dlg.run()
             if (response == dialog.Dialog.BUTTON_ID_1):
-                treeview.append((entry_match.get_text(),entry_replace.get_text()))
-                self.text_cleaner_list = treeview.get_list()
-                self.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path);
+                match_word = entry_match.get_text()
+                # Fix LIOS_96: prevent duplicate match words
+                if any(pair[0] == match_word for pair in self.text_cleaner_list):
+                    err_dlg = dialog.Dialog(_("Duplicate Entry"), (_("Ok"), dialog.Dialog.BUTTON_ID_1))
+                    err_label = widget.Label(_("The same match word is already in the list with a different replace word."))
+                    err_dlg.add_widget(err_label)
+                    err_label.show()
+                    err_dlg.run()
+                    err_dlg.destroy()
+                else:
+                    treeview.append((match_word, entry_replace.get_text()))
+                    self.text_cleaner_list = treeview.get_list()
+                    self.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path)
             dlg.destroy()
 
         def remove_clicked(*data):
             index = treeview.get_selected_row_index()
             treeview.remove(index)
             self.text_cleaner_list = treeview.get_list()
-            self.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path);
+            self.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path)
+            # Fix LIOS_97: announce removal
+            if callable(self.on_text_cleaner_action):
+                self.on_text_cleaner_action(_("Entry removed"))
 
         def export_list(*data):
             self.export_text_cleaner_list()
@@ -309,7 +342,10 @@ class BasicTextView(text_view.TextView):
         def clear(*data):
             self.text_cleaner_list = []
             treeview.set_list(self.text_cleaner_list)
-            self.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path);
+            self.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path)
+            # Fix LIOS_98: announce clear
+            if callable(self.on_text_cleaner_action):
+                self.on_text_cleaner_action(_("All text cleaner entries cleared"))
 
         def list_updated(*data):
             self.text_cleaner_list = treeview.get_list()
@@ -355,8 +391,12 @@ class BasicTextView(text_view.TextView):
         window_text_cleaner.show_all();
 
     def apply_text_cleaner_from_cursor(self,*data):
+        # Fix LIOS_99: guard the undo buffer to prevent signal feedback loop
+        # causing a UI freeze when applying replacements on large text.
         text = self.get_text_from_cursor_to_end()
         text = self.get_text_cleaner_out(text)
+        # Suppress 2 buffer signals (delete-range + insert-text)
+        self._undo_guard = 2
         self.delete_text_from_cursor_to_end()
         self.insert_text(text,text_view.TextView.AT_END)
 

@@ -115,6 +115,8 @@ class linux_intelligent_ocr_solution():
 		#Icon View
 		scroll_box_iconview = containers.ScrollBox()
 		self.iconview = icon_view.IconView()
+		# Wire invert-list announcement (LIOS_92)
+		self.iconview.on_invert_list_callback = lambda: self.notify_information(_(\"Image list order reversed\"), 0)
 		self.iconview.set_vexpand(True)
 		self.iconview.enable_delete_key()
 		scroll_box_iconview.add(self.iconview)
@@ -225,6 +227,11 @@ class linux_intelligent_ocr_solution():
 			self.textview.set_text_cleaner_list_from_file(macros.default_text_cleaner_list_file_path)
 			self.textview.save_text_cleaner_list_to_file(macros.local_text_cleaner_list_file_path)
 
+		# Wire save announcement callback (LIOS_13,15,16,17,18,19)
+		self.textview.on_save_success = self._on_file_saved
+		# Wire text cleaner announcement callback (LIOS_97, 98, 102)
+		self.textview.on_text_cleaner_action = self._on_text_cleaner_action
+
 
 
 		#OCR Engine
@@ -328,7 +335,7 @@ class linux_intelligent_ocr_solution():
 			menu.SEPARATOR,	(_("Save"),self.save_preferences,"None"),
 			(_("Load"),self.load_preferences,"None"),
 			(_("Restore"),self.restore_preferences,"None")],
-		[_("Help"),(_("Open Readme"),self.open_readme,"None"),
+		[_("_Help"),(_("Open Readme"),self.open_readme,"None"),
 			(_("Video Tutorials"),self.open_video_tutorials,"None"),
 			(_("Open Home Page"),self.open_home_page,"None"),
 			(_("Get Source Code"),self.get_source_code,"None"),
@@ -432,6 +439,14 @@ class linux_intelligent_ocr_solution():
 			self.progressbar.set_pulse_mode(False)
 			self.progressbar.set_fraction(percentage)
 
+	def _on_file_saved(self, path):
+		"""Callback: announce file save location (LIOS_13,15,16,17,18,19)."""
+		self.notify_information(_("File saved to {}").format(path), 0)
+
+	def _on_text_cleaner_action(self, message):
+		"""Callback: announce text cleaner actions (LIOS_97,98,102)."""
+		self.notify_information(message, 0)
+
 	def list_updated_event_handler(self,*data):
 		filename = self.imageview.get_filename()
 		if(filename == macros.logo_file):
@@ -465,7 +480,8 @@ class linux_intelligent_ocr_solution():
 		self.textview.audio_converter(voice=self.preferences.speech_language)
 
 	def go_to_page(self,*data):
-		spinbutton_page = widget.SpinButton(0,0,self.preferences.starting_page_number,1,5,0)
+		# Fix LIOS_84/85/86: spin range starts at 1 (not 0)
+		spinbutton_page = widget.SpinButton(1,1,self.preferences.starting_page_number,1,5,0)
 		dlg = dialog.Dialog(_("Go to page"),(_("Go"), dialog.Dialog.BUTTON_ID_1,_("Close!"), dialog.Dialog.BUTTON_ID_2))
 		dlg.add_widget_with_label(spinbutton_page,_("Page Number: "))
 		spinbutton_page.grab_focus()
@@ -572,8 +588,12 @@ class linux_intelligent_ocr_solution():
 	def take_full_screenshot(self,data):
 		destination = self.get_feesible_filename_from_filename("{}{}.png".format(macros.tmp_dir,self.preferences.starting_page_number))
 		self.window.iconify() #minimize
-		os.system("sleep 1") #Time to minimize lios window
-		capture_screen.capture_entire_screen(destination)
+		captured = capture_screen.capture_entire_screen(destination)
+		if not captured:
+			loop.acquire_lock()
+			self.notify_information(_("Screenshot failed – please install scrot or gnome-screenshot"), 0)
+			loop.release_lock()
+			return
 		loop.acquire_lock()
 		self.iconview.add_item(destination)
 		loop.release_lock()
@@ -583,7 +603,12 @@ class linux_intelligent_ocr_solution():
 	def take_rectangle_screenshot(self,data):
 		destination = self.get_feesible_filename_from_filename("{}{}.png".format(macros.tmp_dir,self.preferences.starting_page_number))
 		self.window.iconify() #minimize
-		capture_screen.capture_rectangle_selection(destination)
+		captured = capture_screen.capture_rectangle_selection(destination)
+		if not captured:
+			loop.acquire_lock()
+			self.notify_information(_("Screenshot failed – please install scrot or gnome-screenshot"), 0)
+			loop.release_lock()
+			return
 		loop.acquire_lock()
 		self.iconview.add_item(destination)
 		loop.release_lock()
@@ -593,8 +618,12 @@ class linux_intelligent_ocr_solution():
 	def take_and_recognize_full_screenshot(self,data):
 		destination = self.get_feesible_filename_from_filename("{}{}.png".format(macros.tmp_dir,self.preferences.starting_page_number))
 		self.window.iconify() #minimize
-		os.system("sleep 1") #Time to minimize lios window
-		capture_screen.capture_entire_screen(destination)
+		captured = capture_screen.capture_entire_screen(destination)
+		if not captured:
+			loop.acquire_lock()
+			self.notify_information(_("Screenshot failed – please install scrot or gnome-screenshot"), 0)
+			loop.release_lock()
+			return
 		loop.acquire_lock()
 		self.iconview.add_item(destination)
 		loop.release_lock()
@@ -606,7 +635,12 @@ class linux_intelligent_ocr_solution():
 	def take_and_recognize_rectangle_screenshot(self,data):
 		destination = self.get_feesible_filename_from_filename("{}{}.png".format(macros.tmp_dir,self.preferences.starting_page_number))
 		self.window.iconify() #minimize
-		capture_screen.capture_rectangle_selection(destination)
+		captured = capture_screen.capture_rectangle_selection(destination)
+		if not captured:
+			loop.acquire_lock()
+			self.notify_information(_("Screenshot failed – please install scrot or gnome-screenshot"), 0)
+			loop.release_lock()
+			return
 		loop.acquire_lock()
 		self.iconview.add_item(destination)
 		loop.release_lock()
@@ -1453,6 +1487,12 @@ pacman -S aspell-{1}""").format(lang, langdict, langdict, langdict, langdict))
 	def restore_preferences(self,*data):
 		self.preferences.__init__()
 		self.preferences.set_default_speech_module_and_language()
+		# Fix LIOS_80: clamp scan_driver index to valid range to prevent IndexError
+		max_driver_idx = len(self.available_scanner_driver_list) - 1
+		if max_driver_idx < 0:
+			self.preferences.scan_driver = 0
+		else:
+			self.preferences.scan_driver = min(self.preferences.scan_driver, max_driver_idx)
 		self.make_preferences_effective()
 		self.textview.set_theme(self.preferences.theme, self.preferences.theme_list)
 		self.notify_information(_("Preferences Restored"),0)
