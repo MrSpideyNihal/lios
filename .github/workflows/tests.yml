@@ -35,7 +35,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y tesseract-ocr imagemagick xvfb gir1.2-gtk-3.0 libenchant-2-dev
+          sudo apt-get install -y tesseract-ocr imagemagick xvfb gir1.2-gtk-3.0 libenchant-2-dev libcairo2-dev libgirepository1.0-dev pkg-config
 
       - name: Install Python dependencies
         run: |
