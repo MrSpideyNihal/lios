@@ -19,7 +19,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # 3. Install testing dependencies
-pip install pytest pytest-cov Pillow pyenchant
+pip install pytest pytest-cov pytest-xvfb Pillow pyenchant PyGObject
 
 # 4. Run all tests locally sandboxed
 PYTHONPATH=. pytest Tests/
@@ -66,6 +66,7 @@ PYTHONPATH=. pytest Tests/test_ocr_engines.py::TestOcrEngineTesseract::test_name
 
 ## Test Files
 
+### Backend / OCR Tests
 | File | What It Tests |
 |---|---|
 | `test_macros.py` | Global constants, path resolution, `set_datadir`, mixed-case combos |
@@ -81,6 +82,14 @@ PYTHONPATH=. pytest Tests/test_ocr_engines.py::TestOcrEngineTesseract::test_name
 | `test_scanner_driver_base.py` | `DriverBase` abstract contract, `SCAN_AREA_*` constants |
 | `test_scanner_sane_driver.py` | `DriverSane` with fully mocked `sane` module |
 | `test_scanner_scanimage_driver.py` | `DriverScanimage` with mocked subprocess/os calls |
+
+### GTK UI Tests (headless via `pytest-xvfb`)
+| File | What It Tests |
+|---|---|
+| `test_gtk_text_view.py` | `TextView`: set/get text, insert positions, line ops, cursor, find/replace, highlights |
+| `test_gtk_widgets.py` | `Entry`, `Label`, `Button`, `SpinButton`, `ComboBox`, `ListView`, `Statusbar`, etc. |
+| `test_gtk_containers.py` | `Grid`, `ScrollBox`, `NoteBook`, `Frame`, `Paned`, `Box` |
+| `test_gtk_window.py` | `Window` title/connections, `Dialog` content area + button IDs |
 
 ---
 
@@ -111,9 +120,9 @@ sudo pacman -S tesseract
 
 ## What These Tests Won't Catch
 
-- ❌ GTK UI bugs (requires a display server — use Xvfb for CI)
 - ❌ Real scanner hardware failures
 - ❌ Performance regressions
+- ❌ Complex multi-window GTK workflows (e.g. drag-and-drop between panels)
 
 ---
 
@@ -131,5 +140,66 @@ Key module coverage:
 - `lios/ocr/ocr_engine_base.py` → **78%**
 - `lios/scanner/sane_driver.py` → **65%**
 - `lios/scanner/scanimage_driver.py` → **67%**
+- `lios/ui/gtk/text_view.py` → **tested** (via pytest-xvfb)
+- `lios/ui/gtk/widget.py` → **tested** (via pytest-xvfb)
 
-GTK UI files are 0% — they require a running GTK display.
+---
+
+## How to Add New Tests
+
+When you add a new function or feature to LIOS, add a corresponding test to keep the suite up to date.
+
+### Naming Convention
+- File: `Tests/test_<module_name>.py`
+- Class: `TestClassName` (matches the class you're testing)
+- Method: `test_what_it_does`
+
+### Template: Backend / Logic Test
+```python
+import pytest
+from unittest.mock import patch, MagicMock
+
+class TestMyNewFeature:
+    def test_basic_behavior(self):
+        from lios.my_module import my_function
+        result = my_function("input")
+        assert result == "expected_output"
+
+    @patch("lios.my_module.os.system")
+    def test_shell_command(self, mock_sys):
+        from lios.my_module import run_tool
+        run_tool("file.png")
+        mock_sys.assert_called_once()
+        cmd = mock_sys.call_args[0][0]
+        assert "file.png" in cmd
+```
+
+### Template: GTK Widget Test
+```python
+import pytest
+
+@pytest.fixture(scope="module")
+def gtk_init():
+    import gi
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import Gtk
+    Gtk.init([])
+
+class TestMyWidget:
+    def test_widget_property(self, gtk_init):
+        from lios.ui.gtk.my_widget import MyWidget
+        w = MyWidget()
+        w.set_text("Hello")
+        assert w.get_text() == "Hello"
+```
+
+> **Important:** Always import GTK modules *inside* the test function or fixture, never at the top of the file. This lets `pytest-xvfb` set up the virtual display first.
+
+### Running Your New Test
+```bash
+# Run just your new file
+PYTHONPATH=. pytest Tests/test_my_module.py -v
+
+# Run the full suite to make sure nothing else broke
+PYTHONPATH=. pytest Tests/ --no-cov
+```

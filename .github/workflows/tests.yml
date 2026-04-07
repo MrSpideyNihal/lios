@@ -1,6 +1,7 @@
 name: LIOS Test Suite
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main, LIOS-test ]
   pull_request:
@@ -34,12 +35,12 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y tesseract-ocr imagemagick
+          sudo apt-get install -y tesseract-ocr imagemagick xvfb gir1.2-gtk-3.0 libenchant-2-dev
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov Pillow pyenchant
+          pip install pytest pytest-cov pytest-xvfb Pillow pyenchant PyGObject
 
       - name: Run tests
         run: |
